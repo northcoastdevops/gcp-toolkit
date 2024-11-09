@@ -1,0 +1,195 @@
+name: query-org-iam
+description: |
+  Script to query IAM policies across GCP projects with parallel processing,
+  caching support, and real-time progress display
+
+version: 1.0.0
+language: zsh
+shebang: #!/bin/zsh
+
+environment:
+  required_tools:
+    - gcloud CLI (authenticated)
+    - jq
+    - zsh
+    - tput (for terminal control)
+    - timeout (for job control)
+    - find (for cache cleanup)
+
+configuration:
+  script_specific:
+    flags:
+      LIST_USERS: false
+      LIST_SERVICE_ACCOUNTS: false
+      LIST_ALL: false
+      UNIQUE: false
+      DEBUG: false
+      CHECK_DEPENDENCIES: false
+    variables:
+      FIND_EMAIL: ""
+      ORG_ID: ""
+      PROJECT_ID: ""
+    arrays:
+      RESULTS: []
+      NO_USERS: []
+      NO_SERVICE_ACCOUNTS: []
+      PROJECTS: []
+
+  temporary_files:
+    dir: ${TMPDIR:-/tmp}
+    files:
+      - results.$$
+    cleanup: automatic
+
+default_behavior:
+  mode: READ-ONLY
+  parallel_processing:
+    max_jobs: 10
+    sleep_interval: 0.1
+    job_timeout: 300  # 5 minutes
+  cache:
+    enabled: true
+    ttl: 3600  # 1 hour
+    compression: true
+    location: ${HOME}/.cache/gcloud-utils
+    metadata:
+      stats:
+        hits: 0
+        misses: 0
+        errors: 0
+      access_counts: {}
+
+display_components:
+  status_table:
+    configuration:
+      height: 50% of terminal
+      min_width: 80
+      min_height: 24
+      spinner_chars: [⠋, ⠙, ⠹, ⠸, ⠼, ⠴, ⠦, ⠧, ⠇, ⠏]
+    columns:
+      - Job ID
+      - Status
+      - Progress
+    features:
+      - real-time updates
+      - progress bar
+      - job status tracking
+      - terminal resize handling
+    terminal_control:
+      position_tracking:
+        TABLE_START_POS: 0
+      cursor_operations:
+        - save/restore position
+        - clear screen
+        - move cursor
+      display_clearing:
+        - clear line
+        - clear screen
+
+  operation_log:
+    max_lines: 5
+    format: "[HH:MM:SS] message"
+    display:
+      border: unicode box
+      title: "Current Operations"
+      width: terminal width - 3
+    configuration:
+      OPERATION_BOX_HEIGHT: 7  # Header + 5 lines + footer
+      OPERATION_BOX_START: 0
+
+parallel_processor:
+  features:
+    - job status tracking (running/completed/failed/timeout)
+    - concurrent job limiting
+    - output redirection
+    - progress monitoring
+    - timeout handling
+  job_states:
+    - running
+    - completed
+    - failed
+    - timeout
+  output_handling:
+    stdout: redirected to /dev/null
+    stderr: redirected to /dev/null
+    restore: on completion
+
+command_line_options:
+  organization:
+    flags: [-o, --organization]
+    arg: ORG_ID
+    description: Target organization ID
+    
+  project:
+    flags: [-p, --project]
+    arg: PROJECT_ID
+    description: Limit query to specific project
+    
+  filter:
+    flags: [--filter]
+    arg: TYPE
+    values: [user, service-account, all]
+    
+  cache_control:
+    flags:
+      - --no-cache
+      - --refresh-cache
+    description: Control cache behavior
+    
+  debug:
+    flags: [--debug]
+    description: Enable debug output
+    implementation: set -x
+    
+  dependencies:
+    flags: [--check-dependencies]
+    description: Check for dependencies
+
+error_handling:
+  features:
+    - command retries (max: 3, delay: 5s)
+    - stale lock cleanup
+    - cache operation validation
+    - temporary file management
+    - signal trapping (EXIT, INT, TERM)
+  retry_mechanism:
+    max_attempts: 3
+    delay: 5s
+    backoff: none
+
+caching:
+  structure:
+    base_dir: ${HOME}/.cache/gcloud-utils
+    subdirs:
+      - iam
+      - org
+      - projects
+  features:
+    - compression (.gz)
+    - locking mechanism
+    - metadata tracking
+    - automatic cleanup
+    - parallel refresh
+  operations:
+    - save_to_cache
+    - get_cached_data
+    - cache_is_valid
+    - cleanup_stale_locks
+  locking:
+    mechanism: directory-based
+    timeout: 3600  # 1 hour
+    cleanup: automatic
+
+data_processing:
+  formats:
+    input: JSON (from gcloud)
+    output: TSV
+  operations:
+    - fetch_iam_data
+    - get_projects
+    - process_results
+  fields:
+    - project
+    - member
+    - type (User/Group/Deleted)
+    - role
