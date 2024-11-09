@@ -1,6 +1,6 @@
 project:
-  name: gcp-org-tools
-  description: Collection of scripts for managing Google Cloud Platform organizations
+  name: gcp-toolkit
+  description: High-performance tools for managing Google Cloud Platform at scale
   version: 1.0.0
   language: zsh
   root_dir: /
@@ -200,7 +200,7 @@ components:
 
     caching_system:
       structure:
-        base_dir: iam/.cache
+        base_dir: ${HOME}/.cache/gcp-toolkit
         subdirectories:
           - iam
           - org
@@ -471,10 +471,10 @@ components:
 
       file_paths:
         cache:
-          base_dir: ${HOME}/.cache/gcp-org-tools
+          base_dir: ${HOME}/.cache/gcp-toolkit
           subdirs: [iam, org, projects, locks, metadata]
         backup:
-          base_dir: ${HOME}/Desktop/gcp-iam-backups
+          base_dir: ${HOME}/Desktop/gcp-toolkit-backups
           retention_days: 30
         state:
           location: .state/statefile.txt

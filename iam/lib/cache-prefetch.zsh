@@ -1,5 +1,15 @@
 #!/bin/zsh
 
+# GCP Toolkit by NorthCoast DevOps
+# https://www.northcoastdevops.com
+# High-performance cache prefetching system
+
+# Initialize branding
+TOOLKIT_VERSION="1.0.0"
+TOOLKIT_BANNER="GCP Toolkit Cache Prefetch v${TOOLKIT_VERSION}"
+TOOLKIT_AUTHOR="NorthCoast DevOps"
+TOOLKIT_URL="https://www.northcoastdevops.com"
+
 # Async prefetching configuration
 typeset -gA PREFETCH_PIDS
 typeset -g PREFETCH_BATCH_SIZE=20

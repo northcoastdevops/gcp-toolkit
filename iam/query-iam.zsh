@@ -46,6 +46,12 @@ source "${SCRIPT_DIR}/lib/process-optimizer.zsh"
 optimize_io
 optimize_process
 
+# Initialize branding
+TOOLKIT_VERSION="1.0.0"
+TOOLKIT_BANNER="GCP Toolkit IAM Query Tool v${TOOLKIT_VERSION}"
+TOOLKIT_AUTHOR="NorthCoast DevOps"
+TOOLKIT_URL="https://www.northcoastdevops.com"
+
 # Modify the main processing loop
 main() {
     local projects
@@ -80,3 +86,5 @@ main() {
     # Wait for all background jobs
     wait
 }
+
+echo "GCP Toolkit IAM Query Operation"

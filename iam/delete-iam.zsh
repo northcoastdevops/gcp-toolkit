@@ -18,7 +18,7 @@ TMPDIR="${TMPDIR:-/tmp}"
 TMPFILE="$TMPDIR/delete_results.$$"
 
 # Use configured backup directory or default
-BACKUP_DIR="${BACKUP_DIR:-${HOME}/Desktop/gcp-iam-backups}"
+BACKUP_DIR="${BACKUP_DIR:-${HOME}/Desktop/gcp-toolkit-backups}"
 
 # Colors from config or defaults
 RED="${COLOR_RED:-\033[0;31m}"
@@ -277,3 +277,21 @@ echo "Backup and restore information:"
 echo "  1. Backup location: $BACKUP_DIR"
 echo "  2. Review summary.txt for previous permissions"
 echo "  3. Run restore.sh to restore permissions"
+
+echo "GCP Toolkit IAM Delete Operation"
+echo "By NorthCoast DevOps (https://www.northcoastdevops.com)"
+echo "=================================================="
+echo "This operation will remove IAM bindings for:"
+echo "  User: $EMAIL"
+echo "  Organization: $ORG_ID"
+echo "  Backup Date: $(date)"
+
+# GCP Toolkit by NorthCoast DevOps
+# https://www.northcoastdevops.com
+# Safe IAM permission removal tool with backup capabilities
+
+# Initialize branding
+TOOLKIT_VERSION="1.0.0"
+TOOLKIT_BANNER="GCP Toolkit IAM Delete Tool v${TOOLKIT_VERSION}"
+TOOLKIT_AUTHOR="NorthCoast DevOps"
+TOOLKIT_URL="https://www.northcoastdevops.com"
