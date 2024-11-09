@@ -1,0 +1,484 @@
+project:
+  name: gcp-org-tools
+  description: Collection of scripts for managing Google Cloud Platform organizations
+  version: 1.0.0
+  language: zsh
+  root_dir: /
+
+components:
+  iam_tools:
+    scripts:
+      query_tool:
+        name: query-iam
+        path: iam/query-iam.zsh
+        features:
+          - parallel processing
+          - caching
+          - real-time progress
+          - filtering options
+        dependencies:
+          - status-table.zsh
+          - parallel-processor.zsh
+
+      delete_tool:
+        name: delete-iam
+        path: iam/delete-iam.zsh
+        features:
+          - backup creation
+          - restore script generation
+          - safety confirmations
+          - detailed logging
+        implementation:
+          main_functions:
+            - backup_user_iam
+            - delete
+
+    optimization_components:
+      io_optimizer:
+        path: iam/lib/io-optimizer.zsh
+        features:
+          - buffer size optimization
+          - RAM disk utilization
+          - file descriptor management
+        settings:
+          buffer_size: 16KB
+          fd_limit: 4096
+          temp_dir: /dev/shm
+
+      process_optimizer:
+        path: iam/lib/process-optimizer.zsh
+        features:
+          - CPU priority adjustment
+          - I/O priority setting
+          - memory locking
+          - CPU affinity
+        implementations:
+          - renice prioritization
+          - ion
+
+    monitoring_components:
+      resource_monitor:
+        path: iam/lib/resource-monitor.zsh
+        features:
+          - continuous monitoring
+          - threshold enforcement
+          - adaptive control
+        thresholds:
+          cpu_percent: 80
+          memory_percent: 80
+        implementation:
+          check_interval: 5
+          actions:
+            - batch_size_reduction
+            - parallel_jobs_adjustment
+          monitoring_metrics:
+            - cpu_usage
+            - memory_usage
+            - load_average
+
+    safety_components:
+      dry_run:
+        path: iam/lib/dry-run.zsh
+        features:
+          - command simulation
+          - safety validation
+          - dangerous command detection
+        implementation:
+          dangerous_patterns:
+            - rm -rf /
+          validation:
+            - command_sanitization
+            - safety_checks
+          logging:
+            - simulated_commands
+            - validation_results
+
+      signals:
+        path: iam/lib/signals.zsh
+        features:
+          - interrupt handling
+          - termination management
+          - cleanup procedures
+        handlers:
+          INT: handle_interrupt
+          TERM: handle_term
+          EXIT: cleanup_and_exit
+        cleanup_actions:
+          - kill_background_jobs
+          - remove_temp_files
+          - release_locks
+          - record_metrics
+
+    network_components:
+      network_optimizer:
+        path: iam/lib/network-optimizer.zsh
+        features:
+          - TCP optimization
+          - connection pooling
+          - DNS caching
+        settings:
+          keepalive_interval: 60
+          tcp_retries: 3
+          connection_pool_size: 10
+        optimizations:
+          tcp:
+            keepalive_time: 60
+            keepalive_intvl: 15
+            keepalive_probes: 5
+            fin_timeout: 15
+            max_syn_backlog: 4096
+
+      gcloud_pool:
+        path: iam/lib/gcloud-pool.zsh
+        features:
+          - connection management
+          - token handling
+          - resource pooling
+        implementation:
+          pool_management:
+            - connection_tracking
+            - token_refresh
+            - availability_status
+
+    metrics_and_logging:
+      metrics:
+        path: iam/lib/metrics.zsh
+        features:
+          - operation tracking
+          - performance monitoring
+          - status recording
+        metrics_tracked:
+          - timestamp
+          - operation_type
+          - duration
+          - status
+          - details
+        summary_components:
+          - total_duration
+          - api_calls
+          - cache_statistics
+          - error_count
+
+    shared_configurations:
+      default_config:
+        path: iam/config/default.conf
+        settings:
+          optimization:
+            batch_size:
+              min: 5
+              max: 50
+            intervals:
+              keepalive: 60
+              resource_check: 5
+            thresholds:
+              cpu: 80
+              memory: 80
+              load: 0.8
+              io: 0.7
+              network: 0.6
+            buffer_sizes:
+              default: 1048576
+              flush: 838860
+
+    error_handling:
+      retry_mechanism:
+        max_attempts: 3
+        delay_seconds: 5
+        exponential_backoff: true
+      validation:
+        input_validation:
+          - email_format
+          - project_id_format
+          - role_format
+          - org_id_format
+        permission_checks:
+          - required_roles
+          - scope_validation
+        resource_validation:
+          - existence_check
+          - accessibility_check
+
+    caching_system:
+      structure:
+        base_dir: iam/.cache
+        subdirectories:
+          - iam
+          - org
+          - projects
+          - locks
+          - metadata
+      features:
+        compression: true
+        locking: true
+        metadata_tracking: true
+        ttl_seconds: 3600
+      operations:
+        - read_through
+        - write_behind
+        - parallel_refresh
+        - automatic_cleanup
+
+    state_management:
+      file_location: .state/statefile.txt
+      update_policy: append_only
+      versioning: true
+      backup: true
+      format: text
+      purpose: llm_reconstruction
+
+    performance_components:
+      adaptive_batch:
+        path: iam/lib/adaptive-batch.zsh
+        features:
+          - dynamic batch sizing
+          - performance tracking
+          - automatic adjustment
+        settings:
+          min_batch_size: 5
+          max_batch_size: 50
+        metrics:
+          - total_time
+          - batch_count
+          - average_processing_time
+        reference:
+          code_block:
+            file: iam/lib/adaptive-batch.zsh
+            startLine: 1
+            endLine: 39
+
+    validation_components:
+      input_validator:
+        path: iam/lib/validation.zsh
+        features:
+          - org_id validation
+          - project_id validation
+          - email validation
+          - role validation
+        reference:
+          code_block:
+            file: iam/lib/validation.zsh
+            startLine: 1
+            endLine: 34
+
+    concurrency_control:
+      latency_management:
+        path: iam/lib/concurrency-control.zsh
+        features:
+          - dynamic concurrency adjustment
+          - latency monitoring
+          - sliding window analysis
+        implementation:
+          settings:
+            target_latency_ms: 100
+            window_size: 10
+          adjustments:
+            increase_factor: 1.2
+            decrease_factor: 0.8
+          bounds:
+            min_jobs: 1
+            max_jobs: "2 * nproc"
+        reference:
+          code_block:
+            file: iam/lib/concurrency-control.zsh
+            startLine: 1
+            endLine: 42
+
+    memory_management:
+      monitor:
+        path: iam/lib/memory.zsh
+        features:
+          - usage monitoring
+          - threshold enforcement
+          - cleanup triggering
+        implementation:
+          limits:
+            max_memory_mb: 1024
+            check_interval: 60
+          actions:
+            - memory_check
+            - cleanup_trigger
+            - process_termination
+          cleanup:
+            - kill_monitor
+            - remove_temp_files
+        reference:
+          code_block:
+            file: iam/lib/memory.zsh
+            startLine: 1
+            endLine: 39
+
+    terminal_handling:
+      resize_management:
+        path: lib-common/status-table.zsh
+        features:
+          - window resize detection
+          - display adjustment
+          - minimum size enforcement
+        implementation:
+          minimum_size:
+            width: 80
+            height: 24
+          display:
+            table_height: "50% of terminal"
+            max_rows: "table_height - 6"
+          handlers:
+            - WINCH signal trap
+            - cursor position management
+            - screen redraw
+        reference:
+          code_block:
+            file: lib-common/status-table.zsh
+            startLine:
+
+    io_optimization:
+      io_handler:
+        path: iam/lib/io-optimizer.zsh
+        features:
+          - buffer optimization
+          - RAM disk utilization
+          - file descriptor management
+        implementation:
+          settings:
+            buffer_size: 16384
+            fd_limit: 4096
+            temp_dir: /dev/shm
+          operations:
+            - buffer_configuration
+            - fd_limit_adjustment
+            - ramdisk_setup
+          cleanup:
+            - temp_directory_removal
+            - resource_release
+        reference:
+          code_block:
+            file: iam/lib/io-optimizer.zsh
+            startLine: 1
+            endLine: 31
+
+    metrics_system:
+      performance_tracking:
+        path: iam/lib/metrics.zsh
+        features:
+          - operation timing
+          - status recording
+          - performance summarization
+        implementation:
+          metrics_format:
+            timestamp: ISO8601
+            fields:
+              - operation
+              - duration
+              - status
+              - details
+          summary_metrics:
+            - total_duration
+            - api_calls
+            - cache_stats
+            - error_count
+          storage:
+            format: TSV
+            validation: write_check
+        reference:
+          code_block:
+            file: iam/lib/metrics.zsh
+            startLine: 1
+            endLine: 45
+
+    json_handling:
+      stream_processor:
+        path: iam/lib/json-processor.zsh
+        features:
+          - streaming processing
+          - memory efficiency
+          - policy filtering
+        implementation:
+          settings:
+            batch_size: 1000
+          jq_configuration:
+            mode: stream
+            options:
+              - compact
+              - null-input
+              - raw-output
+          processing:
+            - stream truncation
+            - binding selection
+            - member filtering
+        reference:
+          code_block:
+            file: iam/lib/json-processor.zsh
+            startLine: 1
+            endLine: 23
+
+    global_configuration:
+      environment:
+        required_tools:
+          - gcloud CLI (authenticated)
+          - jq
+          - zsh
+          - tput
+          - timeout
+          - find
+        shell_settings:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          TERM: xterm-256color
+
+      error_handling:
+        retry_mechanism:
+          max_attempts: 3
+          delay_seconds: 5
+          exponential_backoff: true
+        validation:
+          - email_format
+          - permissions
+          - file_operations
+        cleanup:
+          - temporary_files
+          - stale_locks
+          - signal_handling: [EXIT, INT, TERM]
+
+      performance_defaults:
+        batch_processing:
+          initial_size: 5
+          max_size: 50
+          adjustment_interval: 60
+        concurrency:
+          initial_jobs: 10
+          max_jobs: "2 * nproc"
+          adjustment_factor: 0.2
+        memory:
+          max_mb: 1024
+          check_interval: 60
+        network:
+          max_connections: 5
+          timeout: 300
+          keepalive: 60
+
+      display_settings:
+        terminal:
+          min_width: 80
+          min_height: 24
+          update_interval: 0.2
+        colors:
+          error: '\033[0;31m'
+          success: '\033[0;32m'
+          warning: '\033[1;33m'
+          reset: '\033[0m'
+        progress:
+          spinner_chars: [⠋, ⠙, ⠹, ⠸, ⠼, ⠴, ⠦, ⠧, ⠇, ⠏]
+          update_interval: 0.2
+
+      file_paths:
+        cache:
+          base_dir: ${HOME}/.cache/gcp-org-tools
+          subdirs: [iam, org, projects, locks, metadata]
+        backup:
+          base_dir: ${HOME}/Desktop/gcp-iam-backups
+          retention_days: 30
+        state:
+          location: .state/statefile.txt
+          format: text
+          purpose: llm_reconstruction
+
+This completes the comprehensive state file with all components, implementations, and configurations from the codebase. The structure maintains accuracy while being optimized for LLM processing. Would you like me to explain any particular section in more detail?

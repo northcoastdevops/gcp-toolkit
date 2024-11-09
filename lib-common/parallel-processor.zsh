@@ -14,6 +14,10 @@ typeset -g COMPLETED_JOBS=0
 typeset -gA JOB_STATUS
 typeset -g JOB_TIMEOUT=300  # 5 minutes default timeout
 
+# Add after existing globals
+typeset -g BATCH_SIZE=5  # Process jobs in batches
+typeset -gA BATCH_QUEUE
+
 # Initialize parallel processing
 init_parallel_processor() {
     local title=$1
@@ -149,4 +153,32 @@ wait_for_jobs() {
     exec 2>&4 4>&-
     
     echo
+}
+
+batch_jobs() {
+    local current_batch=()
+    
+    # Check if queue exists and has items
+    if [[ -z "${BATCH_QUEUE}" ]] || [[ ${#BATCH_QUEUE[@]} -eq 0 ]]; then
+        log_error "Empty batch queue"
+        return 1
+    }
+    
+    # Fill current batch
+    while ((${#current_batch[@]} < BATCH_SIZE)) && ((${#BATCH_QUEUE[@]} > 0)); do
+        local next_job=${(k)BATCH_QUEUE[1]}
+        [[ -n "$next_job" ]] || break  # Break if next_job is empty
+        current_batch+=($next_job)
+        unset "BATCH_QUEUE[$next_job]"
+    done
+    
+    # Verify batch has items
+    [[ ${#current_batch[@]} -eq 0 ]] && return 0
+    
+    # Process batch in parallel
+    for job in $current_batch; do
+        start_job $job
+    done
+    
+    wait_for_batch $current_batch
 } 

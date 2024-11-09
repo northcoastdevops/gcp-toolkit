@@ -5,6 +5,8 @@ typeset -g TERM_HEIGHT=$(tput lines)
 typeset -g TERM_WIDTH=$(tput cols)
 typeset -g TABLE_HEIGHT=$(( TERM_HEIGHT * 50 / 100 ))
 typeset -g MAX_VISIBLE_ROWS=$(( TABLE_HEIGHT - 6 ))
+typeset -g UPDATE_INTERVAL=0.2  # Throttle updates
+typeset -g LAST_UPDATE=0
 typeset -g SPINNER_CHARS=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 typeset -g SPINNER_IDX=0
 typeset -g TABLE_START_POS=0
@@ -218,16 +220,27 @@ update_operation_status() {
 
 # Add new function
 handle_resize() {
-    TERM_HEIGHT=$(tput lines)
-    TERM_WIDTH=$(tput cols)
+    TERM_HEIGHT=$(tput lines 2>/dev/null || echo 24)
+    TERM_WIDTH=$(tput cols 2>/dev/null || echo 80)
     
     if ((TERM_WIDTH < MIN_TERM_WIDTH || TERM_HEIGHT < MIN_TERM_HEIGHT)); then
-        log "Warning: Terminal size ${TERM_WIDTH}x${TERM_HEIGHT} is below minimum ${MIN_TERM_WIDTH}x${MIN_TERM_HEIGHT}"
+        log_warning "Terminal size ${TERM_WIDTH}x${TERM_HEIGHT} is below minimum ${MIN_TERM_WIDTH}x${MIN_TERM_HEIGHT}"
+        TERM_WIDTH=$MIN_TERM_WIDTH
+        TERM_HEIGHT=$MIN_TERM_HEIGHT
     fi
     
     TABLE_HEIGHT=$(( TERM_HEIGHT * 50 / 100 ))
     MAX_VISIBLE_ROWS=$(( TABLE_HEIGHT - 6 ))
+    
+    # Save cursor position
+    tput sc
+    
+    # Clear screen and redraw
+    clear
     redraw_display
+    
+    # Restore cursor position
+    tput rc
 }
 
 # Add new function
@@ -245,4 +258,4 @@ redraw_display() {
 }
 
 # Add after other configuration
-trap handle_resize WINCH
+trap 'handle_resize' WINCH

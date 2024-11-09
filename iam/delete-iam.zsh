@@ -1,18 +1,30 @@
 #!/bin/zsh
 
-# Configuration
-BACKUP_DIR="${HOME}/Desktop/gcp-iam-backups"
+# Import shared libraries
+SCRIPT_DIR="${0:A:h}"
+source "${SCRIPT_DIR}/../lib-common/status-table.zsh"
+source "${SCRIPT_DIR}/../lib-common/parallel-processor.zsh"
+source "${SCRIPT_DIR}/lib/validation.zsh"
+
+# Load configuration
+CONFIG_FILE="${SCRIPT_DIR}/config/default.conf"
+[[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
+
+# Script-specific configuration
 ORG_ID=""
 CONFIRM=false
 EMAIL=""
 TMPDIR="${TMPDIR:-/tmp}"
 TMPFILE="$TMPDIR/delete_results.$$"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RESET='\033[0m'
+# Use configured backup directory or default
+BACKUP_DIR="${BACKUP_DIR:-${HOME}/Desktop/gcp-iam-backups}"
+
+# Colors from config or defaults
+RED="${COLOR_RED:-\033[0;31m}"
+GREEN="${COLOR_GREEN:-\033[0;32m}"
+YELLOW="${COLOR_YELLOW:-\033[1;33m}"
+RESET="${COLOR_RESET:-\033[0m}"
 
 # Cleanup
 trap '[[ -f "${TMPFILE}" ]] && rm -f "${TMPFILE}"; kill $(jobs -p) 2>/dev/null' EXIT INT TERM
@@ -20,15 +32,6 @@ trap '[[ -f "${TMPFILE}" ]] && rm -f "${TMPFILE}"; kill $(jobs -p) 2>/dev/null' 
 # Logging
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" >&2
-}
-
-# Input validation
-validate_email() {
-    local email=$1
-    if [[ ! "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-        log "Error: Invalid email format"
-        exit 1
-    fi
 }
 
 # Usage
@@ -128,35 +131,64 @@ EOF
 # Delete function
 delete_user_iam() {
     local email="$1"
-    local projects=($(gcloud projects list --format="value(projectId)"))
+    local projects=($(gcloud projects list --format="value(projectId)" 2>/dev/null))
     local success=true
+    local error_count=0
+    local max_errors=5
+    
+    if [[ ${#projects[@]} -eq 0 ]]; then
+        log_error "Failed to list projects or no projects found"
+        return 1
+    fi
     
     log "Starting deletion process for $email"
     
     # Organization level
     if [[ -n "$ORG_ID" ]]; then
         log "Removing from organization $ORG_ID..."
-        if ! gcloud organizations remove-iam-policy-binding "$ORG_ID" \
-            --member="user:$email" --role="roles/viewer" 2>/dev/null; then
-            log "Warning: Failed to remove from organization"
-            success=false
+        if ! retry_command "gcloud organizations remove-iam-policy-binding '$ORG_ID' --member='user:$email' --role='roles/viewer'" 2>/dev/null; then
+            log_error "Failed to remove from organization $ORG_ID"
+            ((error_count++))
         fi
     fi
     
     # Project level
     for project in "${projects[@]}"; do
         log "Processing project: $project"
-        local roles=($(gcloud projects get-iam-policy "$project" --format="json" | \
-            jq -r '.bindings[] | select(.members[] | contains("'"$email"'")) | .role'))
+        
+        # Get current IAM policy
+        local policy_output
+        if ! policy_output=$(retry_command "gcloud projects get-iam-policy '$project' --format='json'" 2>&1); then
+            log_error "Failed to get IAM policy for project $project: $policy_output"
+            ((error_count++))
+            if ((error_count >= max_errors)); then
+                log_error "Too many errors ($error_count), aborting"
+                return 1
+            fi
+            continue
+        fi
+        
+        # Parse roles
+        local roles
+        if ! roles=($(echo "$policy_output" | jq -r --arg email "$email" \
+            '.bindings[] | select(.members[] | contains($email)) | .role' 2>/dev/null)); then
+            log_error "Failed to parse IAM policy for project $project"
+            ((error_count++))
+            continue
+        fi
         
         for role in "${roles[@]}"; do
-            if ! gcloud projects remove-iam-policy-binding "$project" \
-                --member="user:$email" --role="$role" 2>/dev/null; then
-                log "Warning: Failed to remove role $role from project $project"
+            if ! retry_command "gcloud projects remove-iam-policy-binding '$project' --member='user:$email' --role='$role'" 2>/dev/null; then
+                log_error "Failed to remove role $role from project $project"
+                ((error_count++))
                 success=false
             fi
         done
     done
+    
+    if ((error_count > 0)); then
+        log "Warning: Completed with $error_count errors"
+    fi
     
     $success
 }
@@ -166,7 +198,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --email)
             EMAIL="$2"
-            validate_email "$2"
             shift 2
             ;;
         --confirm)
